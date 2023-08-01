@@ -27,6 +27,28 @@ const users = [
 
 const database = require("./database");
 
+const updateUser = (req, res) => {
+  const id = parseInt(req.params.id);
+  const { firstname, lastname, email, city, language } = req.body;
+
+  database
+    .query(
+      "update users set firstname = ?, lastname = ?, email = ?, city = ?, language = ? where id = ?",
+      [firstname, lastname, email, city, language, id]
+    )
+    .then(([result]) => {
+      if (result.affectedRows === 0) {
+        res.status(404).send("Not Found");
+      } else {
+        res.sendStatus(204);
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send("Error editing the user");
+    });
+};
+
 const postUser = (req, res) => {
   const { firstname, lastname, email, city, language } = req.body;
 
@@ -61,19 +83,25 @@ const getUsers = (req, res) => {
 };
 
 const getUserById = (req, res) => {
-  const userId = parseInt(req.params.id);
-
-  const user = users.find((user) => user.id === userId);
-
-  if (!user) {
-    return res.status(404).json({ message: "Not Found" });
-  }
-
-  res.status(200).json(user);
+  const id = parseInt(req.params.id);
+  database
+    .query("select * from users where id = ?", [id])
+    .then(([users]) => {
+      if (users[0] != null) {
+        res.json(users[0]);
+      } else {
+        res.status(404).send("Not Found");
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send("Error retrieving data from database");
+    });
 };
 
 module.exports = {
   getUsers,
   getUserById,
   postUser,
+  updateUser,
 };
